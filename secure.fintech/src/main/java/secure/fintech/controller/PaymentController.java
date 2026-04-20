@@ -20,7 +20,7 @@ public class PaymentController {
     @GetMapping
     @PreAuthorize("hasAuthority('PAYMENT_READ')")
     public ResponseEntity<PagedResponse<PaymentResponse>> listPayments(){
-        /*TODO*/
+
         return null ;
     }
 
