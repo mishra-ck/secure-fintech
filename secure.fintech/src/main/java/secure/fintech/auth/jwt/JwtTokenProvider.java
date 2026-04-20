@@ -16,4 +16,5 @@ public class JwtTokenProvider {
         this.secretKey = secretKey;
         this.blackListService = blackListService;
     }
+
 }
