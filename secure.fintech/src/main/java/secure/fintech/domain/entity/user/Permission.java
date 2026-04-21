@@ -5,6 +5,10 @@ import lombok.*;
 
 import java.util.UUID;
 
+/**
+ * Permission naming convention : {RESOURCE}_{ACTION}
+ * Ex: "TRADE_EXECUTE"
+ */
 @Entity
 @Table(name = "permissions")
 @Getter @Setter
