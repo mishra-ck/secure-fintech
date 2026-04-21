@@ -8,6 +8,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -98,6 +100,11 @@ public class User {
     @Builder.Default
     @Column(nullable = false, precision = 20, scale = 4)
     private BigDecimal maxDailyLimit = new BigDecimal("50000.00");
+
+    // Roles
+    @ManyToMany(fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<Role> roles = new HashSet<>();
 
     // Audit
     @CreatedDate
