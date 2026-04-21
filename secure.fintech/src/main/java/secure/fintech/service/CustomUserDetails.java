@@ -10,6 +10,7 @@ import secure.fintech.domain.entity.user.User;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Getter
 public class CustomUserDetails implements UserDetails {
@@ -52,4 +53,8 @@ public class CustomUserDetails implements UserDetails {
     public boolean isCredentialsNonExpired() { return user.isCredentialExpired(); }
     @Override
     public boolean isEnabled() { return user.isEnabled(); }
+    public UUID getUserId() { return user.getId(); }
+    public String getEntityId() { return user.getEntityId(); }
+    /*TODO*/
+
 }

@@ -1,17 +1,20 @@
 package secure.fintech.auth.jwt;
 
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.map.KeySpaceStore;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.encrypt.KeyStoreKeyFactory;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import secure.fintech.service.CustomUserDetails;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * JWT Token Generator
@@ -43,9 +46,39 @@ public class JwtTokenProvider {
 
     // Token Generation
     public TokenPair generateTokenPair(Authentication auth, boolean mfaVerified){
-        CustomUserDetails userDetails = null;
-        /*TODO*/
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        Instant now = Instant.now();
+        String jti = UUID.randomUUID().toString();
+
+        String accessToken = Jwts.builder()
+                .id(jti)
+                .subject(user.getUsername())
+                .issuer(issuer)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(accessExpirySeconds)))
+                .claim("uid", user.getUserId().toString())
+                .claim("roles", extractRoles(auth))
+                .claim("perms", extractPerms(auth))
+                .claim("eid", user.getEntityId())
+                .claim("mfa", mfaVerified)
+                .claim("type", "access")
+                .signWith(secretKey)
+                .compact();
+
         return null;
+    }
+    private List<String> extractRoles(Authentication auth){
+        return auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(x -> x.startsWith("ROLE_"))
+                .map(y -> y.substring(5))
+                .toList();
+    }
+    private List<String> extractPerms(Authentication auth){
+        return auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(x -> !x.startsWith("ROLE_"))
+                .toList();
     }
 
 
