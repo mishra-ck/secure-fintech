@@ -27,7 +27,7 @@ import java.util.UUID;
 @Slf4j
 public class JwtTokenProvider {
     private final SecretKey secretKey;
-    private final TokenBlackListService blackListService;
+    private final TokenBlackListService tokenBlackListService;
 
     @Value("${app.jwt.access-expiry-seconds:900}")
     private long accessExpirySeconds;
@@ -39,9 +39,9 @@ public class JwtTokenProvider {
     private String issuer;
 
     public JwtTokenProvider(@Value("${app.jwt.secret}") String secretKey,
-                            TokenBlackListService blackListService) {
+                            TokenBlackListService tokenBlackListService) {
         this.secretKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-        this.blackListService = blackListService;
+        this.tokenBlackListService = tokenBlackListService;
     }
 
     // Token Generation
@@ -65,7 +65,25 @@ public class JwtTokenProvider {
                 .signWith(secretKey)
                 .compact();
 
-        return null;
+        String refreshJti = UUID.randomUUID().toString();
+        String refreshToken = Jwts.builder()
+                .id(refreshJti)
+                .subject(user.getUsername())
+                .issuer(issuer)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(refreshExpirySeconds)))
+                .claim("uid",user.getUserId().toString())
+                .claim("type","refresh")
+                .signWith(secretKey)
+                .compact();
+
+        return new TokenPair(accessToken,refreshToken,accessExpirySeconds);
+
+        /*TODO*/
+        //Handling step-up auth for MFA
+    }
+    public void revokeToken(String jti, long ttlSeconds){
+        tokenBlackListService.blackList(jti,ttlSeconds);
     }
     private List<String> extractRoles(Authentication auth){
         return auth.getAuthorities().stream()
