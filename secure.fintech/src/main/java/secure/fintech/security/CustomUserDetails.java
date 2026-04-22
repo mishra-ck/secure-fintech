@@ -1,4 +1,4 @@
-package secure.fintech.service;
+package secure.fintech.security;
 
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;

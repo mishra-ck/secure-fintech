@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
-import secure.fintech.service.CustomUserDetails;
+import secure.fintech.security.CustomUserDetails;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -82,7 +82,6 @@ public class JwtTokenProvider {
                 .compact();
 
         return new TokenPair(accessToken,refreshToken,accessExpirySeconds);
-
     }
     //Handling step-up auth for MFA, for high value operation
     public String generateStepUpToken(String emailId,String userId, String operationType){
