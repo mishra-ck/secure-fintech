@@ -1,7 +1,11 @@
 package secure.fintech.auth.jwt;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -96,6 +100,33 @@ public class JwtTokenProvider {
                 .signWith(secretKey)
                 .compact();
     }
+    // Token Validation
+    public Claims validateAndExtractClaims(String token){
+        try{
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .requireIssuer(issuer)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            // Check blacklisted
+            if(tokenBlackListService.isBlackListed(claims.getId())){
+                throw new JwtException("Token jas been revoked..!");
+            }
+            return claims;
+        }catch (ExpiredJwtException e) {
+            log.debug("JWT expired: {}", e.getMessage());
+            throw e;
+        } catch (SignatureException e) {
+            log.warn("JWT signature invalid");
+            throw e;
+        }catch(JwtException e){
+            log.warn("JWT Token Validation failed : {} ", e.getMessage());
+            throw e;
+        }
+    }
+
     public void revokeToken(String jti, long ttlSeconds){
         tokenBlackListService.blackList(jti,ttlSeconds);
     }

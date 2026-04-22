@@ -13,5 +13,9 @@ public class TokenBlackListService {
     public void blackList(String jti, long ttlSeconds) {
         blackList.put(jti,Instant.now().plusSeconds(ttlSeconds));
     }
-    /*TODO*/
+
+    public boolean isBlackListed(String id) {
+        /*TODO*/
+        return false;
+    }
 }
