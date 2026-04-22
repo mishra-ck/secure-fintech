@@ -79,8 +79,22 @@ public class JwtTokenProvider {
 
         return new TokenPair(accessToken,refreshToken,accessExpirySeconds);
 
-        /*TODO*/
-        //Handling step-up auth for MFA
+    }
+    //Handling step-up auth for MFA, for high value operation
+    public String generateStepUpToken(String emailId,String userId, String operationType){
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .subject(emailId)
+                .issuer(issuer)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(stepupExpirySeconds)))
+                .claim("uid",userId)
+                .claim("type","stepup")
+                .claim("op",operationType)
+                .claim("mfa",true)
+                .signWith(secretKey)
+                .compact();
     }
     public void revokeToken(String jti, long ttlSeconds){
         tokenBlackListService.blackList(jti,ttlSeconds);
