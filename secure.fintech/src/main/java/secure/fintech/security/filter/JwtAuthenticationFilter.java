@@ -8,9 +8,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import secure.fintech.auth.jwt.JwtPrincipal;
 import secure.fintech.auth.jwt.JwtTokenProvider;
@@ -49,6 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     filterChain.doFilter(request,response);
                     return;
                 }
+
                 // Build authorities from JWT claims
                 List<String> roles = claims.get("roles",List.class);
                 List<String> perms = claims.get("perms",List.class);
@@ -67,14 +71,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         claims.getId()
                 );
 
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(principal, null, authorities);
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+
             }catch(JwtException je){
                 log.debug("JWT Authentication failed for {} : {}", request.getRequestURI(), je.getMessage());
             }
         }
+        filterChain.doFilter(request,response);
     }
 
     private String extractToken(HttpServletRequest request) {
-        /*TODO*/
+        String header = request.getHeader("Authorization");
+        if(StringUtils.hasText(header) && header.startsWith("Bearer ")){
+                return header.substring(7).trim();
+        }
         return null;
     }
 
