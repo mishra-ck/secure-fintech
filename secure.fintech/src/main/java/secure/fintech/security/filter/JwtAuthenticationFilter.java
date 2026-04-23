@@ -1,11 +1,14 @@
 package secure.fintech.security.filter;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import secure.fintech.auth.jwt.JwtTokenProvider;
@@ -20,8 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider jwtTokenProvider;
-
+    private final JwtTokenProvider tokenProvider;
     private static final List<String> PUBLIC_URLS = List.of(
             "/actuator/health","/actuator/info","/swagger-ui","/h2/console","/api-docs"
     );
@@ -34,7 +36,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         String token = extractToken(request);
-        /*TODO*/
+        if(token != null && SecurityContextHolder.getContext().getAuthentication() == null){
+            try{
+                Claims claims = tokenProvider.validateAndExtractClaims(token);
+
+                String type = claims.get("type", String.class);
+                if(!"access".equals(type)){
+                    log.warn("Non-access token used for API calls : type:{}",type);
+                    filterChain.doFilter(request,response);
+                    return;
+                }
+                // Build authorities from JWT claims
+                List<String> roles = claims.get("roles",List.class);
+                List<String> perms = claims.get("perms",List.class);
+                /*TODO*/
+
+            }catch(JwtException je){
+                log.debug("JWT Authentication failed for {} : {}", request.getRequestURI(), je.getMessage());
+            }
+        }
     }
 
     private String extractToken(HttpServletRequest request) {
