@@ -23,6 +23,13 @@ import java.util.stream.Stream;
 
 /**
  * JWT Authentication Filter - one per request
+ *
+ * Steps:
+ * 1. Skip public endpoints
+ * 2. Extract Bearer token from Authorization Header
+ * 3. Validate JWT (signature, expiry, blacklist)
+ * 4. Build Authentication from Claims (no DB calls - claims carry everything)
+ * 5. Set into SecurityContextHolder for downstream use
  */
 @Component
 @Slf4j
