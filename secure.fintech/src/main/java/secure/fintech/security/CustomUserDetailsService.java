@@ -1,4 +1,4 @@
-package secure.fintech.security.filter;
+package secure.fintech.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
