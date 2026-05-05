@@ -20,4 +20,8 @@ public class AuthService {
         /*TODO*/
         return null;
     }
+
+    public void logout(String authHeader, String email) {
+        /*TODO*/
+    }
 }

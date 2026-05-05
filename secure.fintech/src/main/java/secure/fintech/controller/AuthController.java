@@ -4,10 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import secure.fintech.auth.jwt.JwtPrincipal;
 import secure.fintech.domain.dto.request.LoginRequest;
 import secure.fintech.domain.dto.request.RefreshRequest;
 import secure.fintech.domain.dto.response.TokenResponse;
@@ -22,7 +21,6 @@ import secure.fintech.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
-
 
     /**
      * Login with email/password + optional OTP
@@ -49,6 +47,17 @@ public class AuthController {
     public ResponseEntity<TokenResponse> refresh(
             @RequestBody @Valid RefreshRequest request){
         return ResponseEntity.ok(authService.refresh(request));
+    }
+    /**
+     * Logout - revokes the current access token
+     */
+    @PostMapping("logout")
+    public ResponseEntity<Void> logout(
+            @RequestHeader("Authorization") String authHeader,
+            @AuthenticationPrincipal JwtPrincipal principal){
+
+        authService.logout(authHeader, principal.email());
+        return ResponseEntity.noContent().build();
     }
 
     private String extractIp(HttpServletRequest httpRequest) {
