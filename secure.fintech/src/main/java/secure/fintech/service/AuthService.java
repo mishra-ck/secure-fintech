@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import secure.fintech.domain.dto.request.LoginRequest;
+import secure.fintech.domain.dto.request.RefreshRequest;
 import secure.fintech.domain.dto.response.TokenResponse;
 
 @Service
@@ -15,4 +16,8 @@ public class AuthService {
         return null;
     }
 
+    public TokenResponse refresh(RefreshRequest request) {
+        /*TODO*/
+        return null;
+    }
 }

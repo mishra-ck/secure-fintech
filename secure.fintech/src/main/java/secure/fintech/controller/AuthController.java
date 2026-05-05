@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import secure.fintech.domain.dto.request.LoginRequest;
+import secure.fintech.domain.dto.request.RefreshRequest;
 import secure.fintech.domain.dto.response.TokenResponse;
 import secure.fintech.service.AuthService;
 
@@ -22,6 +23,10 @@ public class AuthController {
 
     private final AuthService authService;
 
+
+    /**
+     * Login with email/password + optional OTP
+     */
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(
             @RequestBody @Valid LoginRequest request, HttpServletRequest httpRequest ){
@@ -36,9 +41,19 @@ public class AuthController {
         }
         return ResponseEntity.ok(response);
     }
+    /**
+     * Refresh access token using valid refresh token
+     * Revokes old refresh token and issues a new token pair.
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refresh(
+            @RequestBody @Valid RefreshRequest request){
+        return ResponseEntity.ok(authService.refresh(request));
+    }
 
     private String extractIp(HttpServletRequest httpRequest) {
-        /*TODO*/
-        return null;
+       String xIP = httpRequest.getHeader("X-Forwarded-For");
+       return (xIP != null && !xIP.isBlank())
+               ? xIP.split(",")[0].trim():httpRequest.getRemoteAddr();
     }
 }
