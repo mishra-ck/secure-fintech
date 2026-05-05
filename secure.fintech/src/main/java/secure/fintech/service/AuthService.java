@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import secure.fintech.domain.dto.request.LoginRequest;
 import secure.fintech.domain.dto.request.RefreshRequest;
+import secure.fintech.domain.dto.response.MfaSetupResponse;
 import secure.fintech.domain.dto.response.TokenResponse;
 
 @Service
@@ -23,5 +24,10 @@ public class AuthService {
 
     public void logout(String authHeader, String email) {
         /*TODO*/
+    }
+
+    public MfaSetupResponse setupMfa(String email) {
+        /*TODO*/
+        return  null;
     }
 }

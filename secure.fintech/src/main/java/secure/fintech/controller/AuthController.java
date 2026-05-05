@@ -9,11 +9,15 @@ import org.springframework.web.bind.annotation.*;
 import secure.fintech.auth.jwt.JwtPrincipal;
 import secure.fintech.domain.dto.request.LoginRequest;
 import secure.fintech.domain.dto.request.RefreshRequest;
+import secure.fintech.domain.dto.response.MfaSetupResponse;
 import secure.fintech.domain.dto.response.TokenResponse;
 import secure.fintech.service.AuthService;
 
 /**
  * Authentication Controller
+ *  POST /api/auth/login       — credentials + optional OTP code
+ *  POST /api/auth/refresh     — issue new access token from refresh token
+ *  POST /api/auth/logout      — revoke current token pair
  */
 @RestController
 @RequiredArgsConstructor
@@ -58,6 +62,12 @@ public class AuthController {
 
         authService.logout(authHeader, principal.email());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/mfa/setup")
+    public ResponseEntity<MfaSetupResponse> setupMfa(
+            @AuthenticationPrincipal JwtPrincipal principal){
+        return ResponseEntity.ok(authService.setupMfa(principal.email()));
     }
 
     private String extractIp(HttpServletRequest httpRequest) {
