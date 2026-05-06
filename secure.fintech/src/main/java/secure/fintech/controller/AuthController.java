@@ -8,6 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import secure.fintech.auth.jwt.JwtPrincipal;
 import secure.fintech.domain.dto.request.LoginRequest;
+import secure.fintech.domain.dto.request.MfaVerifyRequest;
 import secure.fintech.domain.dto.request.RefreshRequest;
 import secure.fintech.domain.dto.response.MfaSetupResponse;
 import secure.fintech.domain.dto.response.TokenResponse;
@@ -63,11 +64,21 @@ public class AuthController {
         authService.logout(authHeader, principal.email());
         return ResponseEntity.noContent().build();
     }
-
     @PostMapping("/mfa/setup")
     public ResponseEntity<MfaSetupResponse> setupMfa(
             @AuthenticationPrincipal JwtPrincipal principal){
         return ResponseEntity.ok(authService.setupMfa(principal.email()));
+    }
+    @PostMapping("/mfa/verify")
+    public ResponseEntity<TokenResponse> verifyMfa(
+                @RequestBody @Valid MfaVerifyRequest request,
+                @AuthenticationPrincipal JwtPrincipal principal ){
+        // re-issue token if mfa=true claim
+        return ResponseEntity.ok(TokenResponse.builder()
+                .mfaRequired(false)
+                .tokenType("Bearer")
+                .build()
+        );
     }
 
     private String extractIp(HttpServletRequest httpRequest) {
