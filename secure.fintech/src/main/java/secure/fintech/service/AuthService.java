@@ -3,11 +3,14 @@ package secure.fintech.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import secure.fintech.auth.jwt.JwtTokenProvider;
+import secure.fintech.auth.jwt.TokenPair;
 import secure.fintech.auth.mfa.OtpService;
 import secure.fintech.domain.dto.request.LoginRequest;
 import secure.fintech.domain.dto.request.RefreshRequest;
@@ -15,7 +18,11 @@ import secure.fintech.domain.dto.response.MfaSetupResponse;
 import secure.fintech.domain.dto.response.TokenResponse;
 import secure.fintech.domain.entity.user.User;
 import secure.fintech.encryption.EncryptionService;
+import secure.fintech.repository.UserRepository;
 import secure.fintech.security.CustomUserDetails;
+import secure.fintech.security.audit.AuditService;
+
+import java.time.LocalDateTime;
 
 @Service
 @Slf4j
@@ -24,6 +31,9 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final OtpService otpService;
     private final EncryptionService encryptionService;
+    private final AuditService auditService;
+    private final JwtTokenProvider tokenProvider;
+    private final UserRepository userRepository;
     @Transactional
     public TokenResponse login(LoginRequest request, String ip, String userAgent) {
         try {
@@ -51,12 +61,32 @@ public class AuthService {
             if(!mfaValid){
                 mfaValid = checkAndUseBackupCode(user,request.getOtpCode());
             }
+            if(!mfaValid){
+                auditService.logMfaFailure(user.getEmail());
+                throw new BadCredentialsException("Invalid MFA code");
+            }
+            auditService.logMfaSuccess(user.getEmail());
 
+            // Step 3: Issue Tokens
+            boolean mfaVerified = user.isMfaEnabled();
+            TokenPair tokens = tokenProvider.generateTokenPair(auth, mfaVerified);
+
+            // Step 4: update last login
+            userRepository.recordSuccessfulLogin(user.getId(), LocalDateTime.now(), ip);
+            auditService.logLoginSuccess(user.getEmail(), ip , userAgent);
+
+            return TokenResponse.builder()
+                    .accessToken(tokens.accessToken())
+                    .refreshToken(tokens.refreshToken())
+                    .expiresIn(tokens.expiresIn())
+                    .mfaRequired(false)
+                    .tokenType("Bearer")
+                    .build();
 
         }catch(AuthenticationException ex){
-
+            auditService.logLoginFailure(request.getEmail(), ip, ex.getMessage());
+            throw ex;
         }
-        return null;
     }
 
     @Transactional
