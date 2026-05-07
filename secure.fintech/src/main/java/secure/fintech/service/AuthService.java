@@ -51,7 +51,7 @@ public class AuthService {
             if(!mfaValid){
                 mfaValid = checkAndUseBackupCode(user,request.getOtpCode());
             }
-            /*TODO*/
+
 
         }catch(AuthenticationException ex){
 
