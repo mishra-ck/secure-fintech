@@ -9,6 +9,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import secure.fintech.auth.jwt.JwtTokenProvider;
@@ -37,6 +38,9 @@ public class AuthService {
     private final AuditService auditService;
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
+    private final UserDetailsService userDetailsService;
+
+    /** --------------------------- Login  ---------------------------- */
     @Transactional
     public TokenResponse login(LoginRequest request, String ip, String userAgent) {
 
@@ -93,11 +97,35 @@ public class AuthService {
         }
     }
 
+    /**   ------------------- Refresh Token ---------------------   */
     public TokenResponse refresh(RefreshRequest request) {
-        /*TODO*/
-        return null;
+        Claims claims = tokenProvider.validateAndExtractClaims(request.getRefreshToken());
+        if(!"refresh".equals(claims.get("type",String.class))){
+            throw new JwtException("Not a refresh token..!");
+        }
+
+        // Load fresh user state ( since permission may have changed since last token)
+        CustomUserDetails userDetails =
+                (CustomUserDetails) userDetailsService.loadUserByUsername(claims.getSubject());
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                userDetails,null,userDetails.getAuthorities());
+
+        // Revoke old refresh tokens
+        tokenProvider.revokeToken(claims.getId(), 86400);
+
+        boolean mfaVerified = Boolean.TRUE.equals(claims.get("mfa", Boolean.class));
+        TokenPair tokenPair = tokenProvider.generateTokenPair(auth,mfaVerified);
+
+        return TokenResponse.builder()
+                .accessToken(tokenPair.accessToken())
+                .accessToken(tokenPair.refreshToken())
+                .expiresIn(tokenPair.expiresIn())
+                .tokenType("Bearer")
+                .build();
     }
 
+    /** ----------------------------- Logout ---------------------------- */
     public void logout(String bearerToken, String email) {
         String token = bearerToken.startsWith("Bearer ") ? bearerToken.substring(7):bearerToken;
         try{
