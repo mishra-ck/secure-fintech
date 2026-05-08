@@ -1,5 +1,7 @@
 package secure.fintech.service;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,6 +30,7 @@ import java.time.LocalDateTime;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthService {
+
     private final AuthenticationManager authenticationManager;
     private final OtpService otpService;
     private final EncryptionService encryptionService;
@@ -36,6 +39,7 @@ public class AuthService {
     private final UserRepository userRepository;
     @Transactional
     public TokenResponse login(LoginRequest request, String ip, String userAgent) {
+
         try {
             // Step 1: Authenticate Credentials
             Authentication auth = authenticationManager.authenticate(
@@ -89,23 +93,31 @@ public class AuthService {
         }
     }
 
-    @Transactional
-    private boolean checkAndUseBackupCode(User user, String inputCode) {
-        /*TODO*/
-        return false;
-    }
-
     public TokenResponse refresh(RefreshRequest request) {
         /*TODO*/
         return null;
     }
 
-    public void logout(String authHeader, String email) {
-        /*TODO*/
+    public void logout(String bearerToken, String email) {
+        String token = bearerToken.startsWith("Bearer ") ? bearerToken.substring(7):bearerToken;
+        try{
+            Claims claims = tokenProvider.validateAndExtractClaims(token);
+            tokenProvider.revokeToken(claims.getId(), 900);  // blacklist for access token TTL
+            auditService.logLogout(email, claims.getId());
+        }catch (JwtException je){
+            log.debug("Logout with valid token for user {}", email);
+        }
     }
 
     public MfaSetupResponse setupMfa(String email) {
         /*TODO*/
         return  null;
     }
+
+    @Transactional
+    private boolean checkAndUseBackupCode(User user, String inputCode) {
+        /*TODO*/
+        return false;
+    }
+
 }

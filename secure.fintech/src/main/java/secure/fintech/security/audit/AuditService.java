@@ -25,4 +25,9 @@ public class AuditService {
 
     public void logLoginFailure(String email, String ip, String message) {
     }
+
+    @Async
+    public void logLogout(String email, String id) {
+        /*TODO*/
+    }
 }
