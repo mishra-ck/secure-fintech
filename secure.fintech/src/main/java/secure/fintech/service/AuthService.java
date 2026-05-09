@@ -26,6 +26,7 @@ import secure.fintech.security.CustomUserDetails;
 import secure.fintech.security.audit.AuditService;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -137,8 +138,13 @@ public class AuthService {
         }
     }
 
+    @Transactional
     public MfaSetupResponse setupMfa(String email) {
-        /*TODO*/
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        OtpService
+
         return  null;
     }
 
