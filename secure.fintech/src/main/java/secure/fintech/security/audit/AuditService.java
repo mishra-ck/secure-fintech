@@ -64,12 +64,31 @@ public class AuditService {
         );
     }
 
-    public void logLoginFailure(String email, String ip, String message) {
+    public void logLoginFailure(String email, String ip, String reason) {
+        save(AuditLog.builder()
+                .eventId(UUID.randomUUID())
+                .timestamp(Instant.now())
+                .userId(email)
+                .ipAddress(ip)
+                .eventType("AUTH_LOGIN_FAILURE")
+                .outcome("FAILURE")
+                .errorMessage(reason)
+                .severity("WARNING")
+                .regulationTags("NONE")
+                .build());
     }
 
     @Async
-    public void logLogout(String email, String id) {
-        /*TODO*/
+    public void logLogout(String email, String jti) {
+        save(AuditLog.builder()
+                .eventId(UUID.randomUUID())
+                .timestamp(Instant.now())
+                .userId(email)
+                .jwtId(jti)
+                .eventType("AUTH_LOGOUT")
+                .outcome("SUCCESS")
+                .severity("INFO")
+                .build());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
