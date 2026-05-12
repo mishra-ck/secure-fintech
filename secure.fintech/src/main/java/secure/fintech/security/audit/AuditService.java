@@ -21,13 +21,32 @@ public class AuditService {
     private final static Logger LOG = LoggerFactory.getLogger(AuditService.class);
     private final AuditLogRepository auditLogRepository;
     private static final String AUDIT_ENC_KEY = "audit-integrity-key-32-bytes-long";
-    @Async
-    public void logMfaFailure(String email) {
-        /*TODO*/
-    }
+
     @Async
     public void logMfaSuccess(String email) {
-        /*TODO*/
+        save(AuditLog.builder()
+                .eventId(UUID.randomUUID())
+                .timestamp(Instant.now())
+                .userId(email)
+                .eventType("MFA_VERIFY_SUCCESS")
+                .outcome("SUCCESS")
+                .severity("INFO")
+                .regulationTags("NONE")
+                .build()
+        );
+    }
+    @Async
+    public void logMfaFailure(String email) {
+        save(AuditLog.builder()
+                .eventId(UUID.randomUUID())
+                .timestamp(Instant.now())
+                .userId(email)
+                .eventType("MFA_VERIFY_FAILURE")
+                .outcome("FAILURE")
+                .severity("WARNING")
+                .regulationTags("NONE")
+                .build()
+        );
     }
 
     public void logLoginSuccess(String email, String ip, String userAgent) {
