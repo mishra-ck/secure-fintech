@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.security.cert.CertPathBuilder;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -85,4 +86,5 @@ public class AuditLog{
         // Compliance regulation tags
         @Column(name = "regulation_tags", length = 200, updatable = false)
         private String regulationTags;
+
 }

@@ -2,15 +2,23 @@ package secure.fintech.security.audit;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import secure.fintech.domain.entity.audit.AuditLog;
 import secure.fintech.repository.AuditLogRepository;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class AuditService {
-
+    private final static Logger LOG = LoggerFactory.getLogger(AuditService.class);
     private final AuditLogRepository auditLogRepository;
     private static final String AUDIT_ENC_KEY = "audit-integrity-key-32-bytes-long";
     @Async
@@ -23,7 +31,18 @@ public class AuditService {
     }
 
     public void logLoginSuccess(String email, String ip, String userAgent) {
-        /*TODO*/
+        save(AuditLog.builder()
+                .eventId(UUID.randomUUID())
+                .timestamp(Instant.now())
+                .userId(email)
+                .ipAddress(ip)
+                .userAgent(userAgent) // truncate logic to be added
+                .eventType("AUTH_LOGIN_SUCCESS")
+                .outcome("SUCCESS")
+                .severity("INFO")
+                .regulationTags("NONE")  /*TODO*/
+                .build()
+        );
     }
 
     public void logLoginFailure(String email, String ip, String message) {
@@ -32,5 +51,17 @@ public class AuditService {
     @Async
     public void logLogout(String email, String id) {
         /*TODO*/
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void save(AuditLog.AuditLogBuilder builder){
+        AuditLog log = builder
+                .integrityHash(null)  /*TODO*/
+                .build();
+        try{
+            auditLogRepository.save(log);
+        }catch(Exception e){
+            LOG.info("Audit log failed due to an exception : {}",e);
+        }
     }
 }
